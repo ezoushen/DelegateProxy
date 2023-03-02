@@ -65,6 +65,7 @@ class TableViewReloadScheduler: TaskScheduler<Bool> {
     }
 }
 
+
 /// An object that organizes works of `UITableViewDelegate` and `UITableViewDataSource`
 ///
 /// You can set the `delegate` property to proxy unimplemented methods to a specified object
