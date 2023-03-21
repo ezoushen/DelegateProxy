@@ -131,9 +131,9 @@ open class CollectionViewProxy<Provider: SectionDataSource>:
     where
         D : SectionDataSource
     {
-        guard let dataSource = dataSource as? Provider.Sections else { return }
+        guard let provider = dataSource as? Provider else { return }
         refreshScheduler.dispatch {
-            self.dataSource = dataSource
+            self.dataSource = provider.sections
             self._reload()
         }
     }
