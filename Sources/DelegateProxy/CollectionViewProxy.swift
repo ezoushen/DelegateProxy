@@ -47,11 +47,12 @@ open class CollectionViewProxy<Provider: SectionDataSource>:
     {
         self.cellConfigurator = cellConfigurator
         self.provider = provider
+        self.dataSource = provider.sections
 
         super.init()
 
         self.subject = collectionView
-
+        
         collectionView.delegate = self
         collectionView.dataSource = self
 
