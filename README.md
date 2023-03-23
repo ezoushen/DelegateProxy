@@ -64,18 +64,18 @@ for the protocol. It defines the data property, which represents the data for th
 section, and the rows property, which represents the rows for the section. `SectionData` conforms to 
 `MutableSectionDataProtocol` because it provides a mutable implementation of the rows property.
 
-## TableViewProxy
+## ReloadDelegateProxy
 
-`TableViewProxy` is a concrete implementation of `DelegateProxy` designed specifically for `UITableView`. 
-It provides a simple way to customize the behavior of a `UITableView` by intercepting and controlling 
-its delegate and data source methods.
+`ReloadDelegateProxy` is a concrete implementation of `DelegateProxy` designed specifically for 
+`UITableView` and `UICollectionView`. It provides a simple way to customize the behavior of a
+`UITableView`/`UICollectionView` by intercepting and controlling its delegate and data source methods.
 
-## TableViewProxyInterceptor
+## ReloadDelegateProxyInterceptor
 
-`TableViewProxyInterceptor` is another concrete implementation of `DelegateProxy` that allows you 
-to create custom interceptors for `UITableView` methods. By creating a subclass of `TableViewProxyInterceptor` 
-and implementing the methods you want to intercept, you can easily customize the behavior of a `UITableView`
- without having to implement a full `TableViewProxy` subclass.
+`ReloadDelegateProxyInterceptor` is another concrete implementation of `DelegateProxy` that allows you 
+to create custom interceptors for `UITableView`/`UICollectionView` delegate/dataSource methods. 
+By creating a subclass of `TableViewProxyInterceptor` and implementing the methods you want to intercept,
+you can easily customize the behavior of a `UITableView` without having to implement a full `TableViewProxy` subclass.
  
 Here's an example of a custom interceptor for a `UITableView`:
 
