@@ -2,10 +2,8 @@
 
 import UIKit
 
-public protocol TableViewInterceptorProtocol: TableViewProxyProtocol {
-    associatedtype Proxy: TableViewProxyProtocol
-    var proxy: Proxy! { get }
-}
+public protocol TableViewInterceptorProtocol: ReloadInterceptorProtocol, TableViewProxyProtocol
+where Proxy: TableViewProxyProtocol { }
 
 /// An object that intercepts interested methods and controls the calling stack.
 ///
@@ -31,71 +29,9 @@ public protocol TableViewInterceptorProtocol: TableViewProxyProtocol {
 /// The outer interceptor would be the final delegate and dataSource of the tableView, which means it controls the calling stack of all
 /// delegate methods.
 open /* abstract */ class TableViewInterceptor<Proxy: TableViewProxyProtocol>:
-    DelegateProxy<UITableViewDelegate & UITableViewDataSource, UITableView>,
+    ReloadInterceptor<Proxy>,
     TableViewInterceptorProtocol
 {
-    open override weak var subject: UITableView? {
-        willSet {
-            newValue?.delegate = self
-            newValue?.dataSource = self
-        }
-    }
-
-    public typealias Provider = Proxy.Provider
-    
-    /// Collect observations returned from `proxy.observeSubjectDidChange`
-    public var proxySubjectObservations: [Proxy.Observation] = []
-
-    public var provider: Proxy.Provider { proxy.provider }
-
-    public var proxy: Proxy! {
-        willSet { proxySubjectObservations = [] }
-        didSet { setupProxy() }
-    }
-
-    public var dataSource: Proxy.Provider.Sections {
-        proxy.dataSource
-    }
-
-    public required init?(context: Any) {
-        proxy = Proxy.init(context: context)
-        super.init()
-        setupProxy()
-    }
-
-    public override init() {
-        proxy = Proxy.init(context: ())
-        super.init()
-        setupProxy()
-    }
-
-    public required init(wrappedValue proxy: Proxy) {
-        self.proxy = proxy
-        super.init()
-        setupProxy()
-    }
-
-    internal func setupProxy() {
-        guard let proxy = proxy else { return }
-        delegate = proxy
-        subject = proxy.subject
-        didUpdateProxy()
-    }
-
-    open func didUpdateProxy() {
-        proxySubjectObservations.append(
-            proxy.observeSubjectDidUpdate { [unowned self] in
-                subject = $0
-            }
-        )
-    }
-
-    @MainActor
-    @discardableResult
-    open func reload() async -> Bool {
-        await proxy.reload()
-    }
-
     @MainActor
     open func performUpdates(_ block: @MainActor @escaping () -> Void) async throws {
         try await proxy.performUpdates(block)

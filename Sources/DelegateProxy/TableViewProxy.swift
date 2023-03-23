@@ -3,22 +3,12 @@
 import UIKit
 
 public protocol TableViewProxyProtocol:
-    DelegateProxyProtocol,
+    ReloadDelegateProxyProtocol,
     UITableViewDelegate,
     UITableViewDataSource
 where
     Subject == UITableView
 {
-    associatedtype Provider: SectionDataSource
-    var provider: Provider { get }
-    var dataSource: Provider.Sections { get }
-    
-    init?(context: Any)
-
-    @MainActor
-    @discardableResult
-    func reload() async -> Bool
-
     @MainActor
     func performUpdates(_ block: @MainActor @escaping () -> Void) async throws
 }
@@ -71,7 +61,7 @@ class TableViewReloadScheduler: TaskScheduler<Bool> {
 /// You can set the `delegate` property to proxy unimplemented methods to a specified object
 /// which makes the `TableViewProxy` able to focus on its own concern.
 open class TableViewProxy<Provider: SectionDataSource>:
-    DelegateProxy<UITableViewDelegate, UITableView>,
+    ReloadDelegateProxy<UITableViewDelegate & UITableViewDataSource, UITableView>,
     DataSubscriber,
     UITableViewReloadDelegate,
     TableViewProxyProtocol
@@ -201,12 +191,6 @@ where Provider.Sections: ExpressibleByArrayLiteral
         guard result == false else { return }
         throw CancellationError()
     }
-    
-    @MainActor
-    open func willReload() { }
-    
-    @MainActor
-    open func didReload() { }
     
     open func tableView(
         _ tableView: UITableView,

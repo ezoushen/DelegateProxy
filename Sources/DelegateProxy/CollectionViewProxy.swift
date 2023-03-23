@@ -2,13 +2,24 @@
 
 import UIKit
 
-open class CollectionViewProxy<Provider: SectionDataSource>:
-    DelegateProxy<UICollectionViewDelegate, UICollectionView>,
+public protocol CollectionViewProxyProtocol<Provider>:
+    ReloadDelegateProxyProtocol,
     DataSubscriber,
     UICollectionViewDelegate,
     UICollectionViewDataSource,
     UICollectionViewDelegateFlowLayout
+where
+    Subject == UICollectionView
+{ }
+
+open class CollectionViewProxy<Provider: SectionDataSource>:
+    ReloadDelegateProxy<
+        UICollectionViewDelegate & UICollectionViewDataSource & UICollectionViewDelegateFlowLayout,
+        UICollectionView
+    >,
+    CollectionViewProxyProtocol
 {
+
     public typealias Row = Provider.Section.Row
     public typealias Data = Provider.Section.Data
 
@@ -62,11 +73,18 @@ open class CollectionViewProxy<Provider: SectionDataSource>:
     }
 
     /// Update the data source from the provider and reload the collection view. All reload calls will be executed sequentially
-    public func reload(completion: (() -> Void)? = nil) {
+    public func reload(completion: (() -> Void)?) {
         Task { @MainActor in
             _reload()
             completion?()
         }
+    }
+    
+    @MainActor
+    @discardableResult
+    public func reload() -> Bool {
+        _reload()
+        return true
     }
 
     @MainActor
@@ -75,12 +93,6 @@ open class CollectionViewProxy<Provider: SectionDataSource>:
         subject?.reloadData()
         didReload()
     }
-
-    @MainActor
-    open func willReload() { }
-
-    @MainActor
-    open func didReload() { }
 
     // MARK: UICollectionViewDelegate & UICollectionViewDataSource
 
