@@ -43,6 +43,10 @@ class TaskScheduler<Output> {
         currentTask = newTask
         return newTask
     }
+    
+    func cancel() {
+        currentTask?.cancel()
+    }
 }
 
 @MainActor
@@ -137,16 +141,6 @@ where Provider.Sections: ExpressibleByArrayLiteral
         }
     }
     
-    /// Tell the animator to prepare animations for in coming changes
-    public func prepareAnimation(sections: Provider.Sections? = nil) {
-        animator.prepareAnimation(for: sections ?? provider.sections)
-    }
-    
-    /// Update current data source from the provider
-    public func pullDataSource() {
-        animator.updateSnapshot(provider.sections)
-    }
-    
     /// Update the data source from the provider and reload the table view. All reload calls will be executed sequentially
     @MainActor
     @discardableResult
@@ -158,13 +152,10 @@ where Provider.Sections: ExpressibleByArrayLiteral
             guard Task.isCancelled == false else { return false }
             return await withCheckedContinuation { continuation in
                 self.willReload()
-                let hasPendingChanges = animator.hasPendingChanges
-                /// Prepare animations if having no any pending change
-                if hasPendingChanges == false {
-                    self.prepareAnimation()
-                }
                 /// Apply changes
-                animator.applyCurrentChanges(animated: animated) { [weak self] in
+                animator.applyCurrentChanges(
+                    animated: animated, sections: self.provider.sections)
+                { [weak self] in
                     self?.isReordering = false
                     self?.didReload()
                     continuation.resume(with: .success($0))
@@ -259,17 +250,6 @@ where Provider.Sections: ExpressibleByArrayLiteral
     
     // MARK: DataSubscriber
 
-    open func dataSourceWillChange<D>(_ dataSource: D, newValue: D.Sections)
-    where
-        D : SectionDataSource
-    {
-        guard let newValue = newValue as? Provider.Sections else { return }
-        refreshScheduler.dispatch {
-            /// Prepare animations for the incoming changes
-            self.prepareAnimation(sections: newValue)
-        }
-    }
-
     open func dataSourceDidRefresh<D>(_ dataSource: D, hasChanged: Bool)
     where
         D : SectionDataSource
@@ -277,7 +257,8 @@ where Provider.Sections: ExpressibleByArrayLiteral
         if isReordering {
             /// Legacy reordering API infers that developers should handle the underlying data changes without reloading table view
             /// So updating the data snapshot is all we need here.
-            pullDataSource()
+            reloadScheduler.cancel()
+            animator.updateSnapshot(provider.sections)
             isReordering = false
         } else {
             refreshScheduler.dispatch {

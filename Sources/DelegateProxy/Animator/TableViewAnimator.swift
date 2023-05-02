@@ -173,26 +173,28 @@ where
         self.tableView = tableView
     }
     
-    /// Compute diff between given collection to the snapshot
-    public func prepareAnimation(for sections: Collection) {
-        instructions = createAnimationInstruction(sections: sections)
-    }
-
     /// Clear pending changes and update the snapshot
-    public func updateSnapshot(_ snapshot: Collection) {
+    func updateSnapshot(_ snapshot: Collection) {
         instructions = nil
         self.snapshot = snapshot
     }
 
     /// Apply pending changes with or without animations.
     /// Snapshot will already be updated while completion handler called
-    public func applyCurrentChanges(animated: Bool, completion: @escaping (Bool) -> Void) {
+    func applyCurrentChanges(
+        animated: Bool,
+        sections: @autoclosure () -> Collection,
+        completion: @escaping (Bool) -> Void)
+    {
         let reloadCompletion: (Bool) -> Void = {
             self.reloadVisibleCells()
             completion($0)
         }
         
-        guard let instructions = instructions else { return reloadCompletion(false) }
+        guard let instructions = instructions ??
+                createAnimationInstruction(sections: sections()) else {
+            return reloadCompletion(false)
+        }
 #if DEBUG
         if logEnabled {
             print(instructions.description)
