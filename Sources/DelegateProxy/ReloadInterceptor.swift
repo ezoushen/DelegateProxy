@@ -71,18 +71,19 @@ open /* abstract */ class ReloadInterceptor<Proxy: ReloadDelegateProxyProtocol>:
 
     open func didUpdateProxy() {
         proxySubjectObservations.append(
-            proxy.observeSubjectDidUpdate { [unowned self] in
+            proxy.observeSubjectDidUpdate { [weak self] in
+                guard let self else { return }
                 subject = $0
             }
         )
         proxyDidReloadObservations.append(
-            proxy.observeSubjectWillReload { [unowned self] _ in
-                Task { @MainActor in willReload() }
+            proxy.observeSubjectWillReload { [weak self] _ in
+                Task { @MainActor [weak self] in self?.willReload() }
             }
         )
         proxyDidReloadObservations.append(
-            proxy.observeSubjectDidReload { [unowned self] _ in
-                Task { @MainActor in didReload() }
+            proxy.observeSubjectDidReload { [weak self] _ in
+                Task { @MainActor [weak self] in self?.didReload() }
             }
         )
     }

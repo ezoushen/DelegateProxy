@@ -36,6 +36,8 @@ where Delegate: NSObjectProtocol, Subject: NSObject {
         public func cancel() {
             cancelled = true
         }
+
+        deinit { cancel() }
     }
     
     @inlinable open var delegateGetSelector: Selector {
