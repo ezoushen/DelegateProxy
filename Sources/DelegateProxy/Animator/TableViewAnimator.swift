@@ -183,7 +183,7 @@ where
     /// Snapshot will already be updated while completion handler called
     func applyCurrentChanges(
         animated: Bool,
-        sections: @autoclosure () -> Collection,
+        sections: Collection,
         completion: @escaping (Bool) -> Void)
     {
         let reloadCompletion: (Bool) -> Void = {
@@ -192,7 +192,8 @@ where
         }
         
         guard let instructions = instructions ??
-                createAnimationInstruction(sections: sections()) else {
+                createAnimationInstruction(sections: sections) else {
+            updateSnapshot(sections)
             return reloadCompletion(false)
         }
 #if DEBUG
