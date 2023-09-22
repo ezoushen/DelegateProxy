@@ -92,7 +92,7 @@ extension SectionData: ContentHashable where Row: ContentHashable {
         var hasher = Hasher()
         hasher.combine(data)
         for row in rows {
-            hasher.combine(row)
+            hasher.combine(row.contentHashValue)
         }
         return hasher.finalize()
     }
