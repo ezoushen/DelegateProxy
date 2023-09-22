@@ -149,16 +149,19 @@ where Provider.Sections: ExpressibleByArrayLiteral
         let animated = self.animated
         let animator = self.animator
         let task = reloadScheduler.dispatch {
+            [dataSource = self.subject?.dataSource, delegate = self.subject?.delegate] in
             guard Task.isCancelled == false else { return false }
             return await withCheckedContinuation { continuation in
                 self.willReload()
                 /// Apply changes
                 animator.applyCurrentChanges(
                     animated: animated, sections: self.provider.sections)
-                { [weak self] in
+                { [weak self, dataSource, delegate] in
                     self?.isReordering = false
                     self?.didReload()
                     continuation.resume(with: .success($0))
+                    /// Explicitly extend lifetime of dataSource and delegate
+                    _ = (dataSource, delegate)
                 }
             }
         }
